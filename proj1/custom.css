@@ -1,0 +1,69 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@200;400;500&display=swap");
+.rasterYod {
+  color: goldenrod;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 5em;
+}
+
+.task2imgs {
+  display: flex;
+  flex-direction: row;
+}
+
+.task2img {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.imgContainer {
+  align-self: center;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 777px;
+}
+
+.imgContainerTask4 {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 800px;
+}
+
+.imgContainerTask3 {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 444px;
+}
+
+.imgDescription {
+  align-self: center;
+  font-family: "Inter", sans-serif;
+  font-weight: 200;
+}
+
+.imgBox {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+}
+p {
+  padding-bottom: 10px;
+}
+h3 {
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  padding-bottom: 4px;
+}
+h1 {
+  padding-bottom: 5px;
+}
