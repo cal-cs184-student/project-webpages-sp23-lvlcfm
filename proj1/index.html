@@ -1,7 +1,398 @@
 <html>
-	<head>
-	</head>
-	<body>
-		Project 1 here
-	</body>
+<head>
+	<link rel="stylesheet" href="index.css">
+</head>
+<body>
+	<div>
+		<b>A project production by RasterYod</b>
+		<h1>Overview</h1>
+		<p>Hello dear reader, what I’ve made in this journey, what I’ve implemented in this project is a simple rasterizer,
+			that is, a vector graphics renderer that can take a simplified version of an SVG (Scalable Vector Graphics) file
+			and render it.
+		</p>
+		<p>
+			I’ve learned to rasterize triangles with colors and gradients, which to implement I learned about the point in
+			triangle test and learned about a new coordinate system for triangles - barycentric coordinates. I learned what a
+			bounding box looks like in its implementation form and how it saves us computational time and space. I learned
+			about supersampling, how we can use it as a tool to antialias our images, allowing us to render graphics that
+			produce better results. I made a robot dance through dimensions. I learned how to sample textures with different
+			techniques and apply them to our fundamental geometrical shape — the triangle. And I also learned about level
+			sampling through MipMaps and how it’s an efficient way of storing different filtered versions of the texture that
+			we could sample from. And lastly, I think one of the most important things I learned was how and where to modify
+			the pipeline of a rasterizer to accomplish all these features and how they all fit together. Very grateful for
+			this opportunity.
+		</p>
+	</div>
+	<div>
+		<div>
+			<h1>Task 1: Drawing Single-Color Triangles</h1>
+			<div>
+				<p>How do we “draw” triangles? That is to say, how do we rasterize triangles? It is here where I’ll give a
+					walkthrough of how I implemented the `rasterize_triangle` function which will serve as an answer to the
+					question
+					posed.
+				</p>
+			</div>
+
+		</div>
+
+		<div>
+			<h6>General Approach:</h6>
+			<div>
+				<p>
+					First, I went through the process of understanding what sampling is and how it is used in the context of
+					rasterizing a triangle. One approach that I took from the lecture on Digital Drawing was point sampling by
+					sampling a function.
+				</p>
+				<p>
+					In my approach, the sampling function took the form of the “point-in-triangle” test where I constructed the
+					test
+					by implementing a function called “inside_l_x” where it essentially took a; sample point and took the dot
+					product
+					of that sample point to determine if it was above, on or below the line in question.
+				</p>
+				<p>
+					By taking the three triangle vertices, I constructed the three line test, iterating (initially) through the
+					whole
+					width and height and sampling each of the points, which allowed me to answer the question “is this sample
+					point
+					in
+					the triangle or not?”. In addition to implementing the 3 line test, I also incorporated the OpenGL edge rules
+					when
+					they are laying exactly on an edge, which took the form of pre-computing and determining if any of the edges
+					was
+					a
+					“Top Edge” or a “Left Edge” through boolean values passed in as an additional parameter to the line test
+					function.
+				</p>
+				<p>So now that I had the three line test, I could now determine which sample points lie within the triangle.
+					Once
+					I
+					identified when a sample point was within the triangle, I invoked the “fill_pixel” function which took the
+					cartesian x,y coordinates and applied the “color” that was passed in.
+				</p>
+			</div>
+			<div>
+				<h6>Algorithm Complexity</h6>
+				<div>
+					<p>
+						When I first began the task, the bounding box that I established covered all of the screen space, running
+						through every pixel in the framebuffer, the whole width and height of it all. This is absolutely the worst
+						case scenario, which allows us to establish a lower bound. In order to improve on this, I moved forward with
+						creating a bounding box based upon the coordinates of the triangle, by taking the max of the 3 y-coordinates
+						to establish the top part of the bounding box, then by taking the min of the 3 y-coordinates to establish
+						the bottom part of the bounding box. We repeat this same process but for the x-coordinates for each of the
+						vertices to establish the smallest width for our bounding box that covers the whole triangle. By
+						establishing this bounding box, the runtime for sampling this bounding box is at least as efficient as
+						sampling only within the bounding box of the triangle.
+						When I first began the task, the bounding box that I established covered all of the screen space, running
+						through every pixel in the framebuffer, the whole width and height of it all. This is absolutely the worst
+						case scenario, which allows us to establish a lower bound. In order to improve on this, I moved forward with
+						creating a bounding box based upon the coordinates of the triangle, by taking the max of the 3 y-coordinates
+						to establish the top part of the bounding box, then by taking the min of the 3 y-coordinates to establish
+						the bottom part of the bounding box. We repeat this same process but for the x-coordinates for each of the
+						vertices to establish the smallest width for our bounding box that covers the whole triangle. By
+						establishing this bounding box, the runtime for sampling this bounding box is at least as efficient as
+						sampling only within the bounding box of the triangle.
+					</p>
+				</div>
+			</div>
+			<div>
+				<h6>Challenges</h6>
+				<div>
+					<ul>
+						<li>Winding order, which required me to switch the order of the vertices within the line test
+						</li>
+						<li>
+							Solving the riddle of what happens when a point lies outside all three line tests? While it’s not the
+							metaphor I would like to choose, it’s like 3 outs make an in (inning). If the point lies outside all three
+							lines, it must be a corner case that the triangle is the point itself.
+						</li>
+						<li>
+							Understanding how to contruct a bounding box
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div>
+		<h1>Task 2: Antialiasing by Supersampling</h6>
+        <h6> Algorithm & Data Structures</h6>
+		    <div>
+				<h6>The data structure</h6>
+				<div>
+					<p>For my approach to implementing super sampling, I first thought about the data structure of how to store the subsamples. In my implementation, I used the “sample_buffer” to be the temporary storage for the subsamples, that is, the high resolution version of the image. To account for this, I scaled the sample_buffer size by the “sample_rate” to account for the additional subsamples. I modified all parts of the codebase that managed the supersample buffer memory to dynamically change the super “sample_buffer” size when the “sample_rate” was changed.
+	                </p>
+		    </div>
+		    <div>
+				<h6>The Algorithm</h6>
+				<div>
+					<p>For my approach to supersampling, I broke up the problem into two main phases - the super sampling phase and then the down sampling phase.  
+                     </p>
+                     <p>
+                     	Populating the super sample “sample_buffer”
+                     </p>
+                     <p>
+                     	For the super sampling phase, when the sample_rate was greater than 1, I modified “rasterize_triangle” to subdivide each sample point by the square root of the samle_rate.  That is, if the sample rate was 4, I would subdivide each sample into 4 equally spaced components and I would step into each subsample, and sample each subsample from its center and apply the “point in triangle test” and if it was inside the triangle, I would set that subsample’s color accordingly in the super sample “sample_buffer” according to a modified indexing scheme that accounts for the the sample_size scaling factor. 
+                     </p>
+                     <p>
+                     	To account for the effects of super sampling on lines and points I modified the rasterize_point function to implement the same subsample, subdivide scheme as in “rasterize_triangle” minus the point in triangle test and simply applying the same color to each subsample. I also modified the fill_pixel function to account for the new indexing scheme which takes into account the sample_rate scaling factor when the sample_rate is greater than 1.
+                     </p>
+                     <p>
+                     	Downsampling and resolving_to_buffer
+                     </p>
+                     <p>
+                     	Now that I have a super sample “buffer_sample” of all the subsamples (the high definition version), I iterate through the super sample “buffer_sample” by stepping through each subsample (subgrid) location which is sqrt(sample_rate) * sqrt(sample_rate). When stepping through these subsample points, I take their Red, Green and Blue values and average them, which results in the downsampling mentioned above.
+
+                     </p>
+                     <p>
+                     	In conclusion, I had to modify two key steps in the pipeline of the rasterizer, step 3 where “SVG::draw” calls a specific line/triangle/point and the final step, step 5, the “resolve to framebuffer” step where we translate the super sample “sample_buffer” of the rasterizer to the screen buffer.
+                     </p>
+                     <p>Why is supersampling useful? Explain how you used supersampling to antialias your triangles.</p>
+                     <p>
+                     Supersampling is useful because it is a technique used to antialias our images.  One concrete example is when “jaggies” are produced without supersampling, when applying super sampling we can produce an image that reduces “jaggies”, by outputting pixels that take on intermediate values, instead of simply being left out.
+                     </p>
+                     <p>
+                     The following images help illustrate the benefits of supersampling.
+                     </p>
+                     <div>
+                     	<img src="./images/1task/sample_rate_1.png" />
+                     	<img src="./images/1task/sample_rate_4.png" />
+                     	<img src="./images/1task/sample_rate_16.png" /> 
+                     </div>
+                     <p>
+                     From left to right, sample rates 1, 4, 16. We begin with “jaggies” with discontinuous edges of the triangle because we are sampling by 1 sample point and not taking into account any of the pixel’s neighbor’s colors. We moving forward in sample rates 4 and 16, that we are producing these antialiased edges, because as we are increasing the sample rate, that is we are taking more samples of the same resolution image and averaging those pixels, which allows us “smooth” out these edges and connect them because we are averaging these subsample, subgrid sample points. Which result in pixels that were previously not red or (255,255,255) to now taking on a color close to red, close to its neighboring pixels. 
+                     </p>
+                     <p>
+                     	To put it simply — sampling one pixel alone makes the ride “jaggy”, but with the help of your nearest friends, the road ahead can look “smooth” even connected where you thought you couldn’t reach.
+                     </p>
+		        </div>
+		        <div>
+		        	<h6>
+		        		Notable Challenges
+		        	</h6>
+		        	<div>
+		        		<ul>
+		        			<li>
+		        			Indexing properly and segmenting the sample points, i.e the pixels into its appropriate sub pixels and indexing into them accordingly.
+		        			</li>
+		        			<li>
+		        			Blurry dragon, due to indexing issues, getting a gaussian effect as opposed to a smoother and sharper, higher definition 
+		        			</li>
+		        			<li>
+		        			Indexing correctly into the sample_buffer to correctly resolve in resolve_to_framebuffer
+		        			</li>
+		        		</ul>
+		        	</div>
+		        </div>
+		</div>
+		<div>
+			<h1>
+				Task 3: Transforms
+			</h1>
+			<div>
+				<img src="./images/3task/my_robot.png"/>
+				<h6>Explanation of Cubeman</h6>
+				<div>
+					<p>My intent of modifying the different appendages of the robot svg was to give the impression of more “movement” to add a sense of “dynamic” movement to the robot. I attempted to accomplish this effect by doing subtle (and not so subtle) rotations on the ends of their arms and also translating their knees and feet to bring them closer to their torso.
+                    </p>
+                    <p>The result is modifying cubeman to be in a famous “locking” pose, which is made famous from the funky dance style of Locking. 
+                    </p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div>
+	   <h1>Task 4: Barycentric Coordinates</h1>	
+	   <div>
+	   	<h6>What are Barycentric Coordinates?</h6>
+	   	<div>
+	   		<p>
+	   			Barycentric coordinates are a special coordinate system for triangles. In essence, it allows us to interpolate values within the triangle based upon the vertices of a triangle. That is, by taking 3 vertices of a triangle and a given point of interest within the triangle, we can generate 3 barycentric coordinates - alpha, beta and gamma, which act as “weights” to each of the vertices. We then apply these weights to each of the vertices respectively and add them all up. This summation produces the interpolated value of the point of interest. The utility that we can draw out from Barycentric coordinates is thinking of cases where we add additional information to the vertices, in addition to their coordinates, what if we also added a color associated with each vertex?
+	   		</p>
+	   		<p>
+	   			To illustrate the utility of how Barycentric coordinates work let's say we have 3 vertices Va, Vb, and Vc that represent cartesian coordinates of a triangle, but in addition to having those coordinates, each vertex also has a color - Ca, Cb and Cc.  Given a cartesian point within this triangle, can we interpolate the color of that point? The answer is yes. To drive the point home, these alpha, beta, gamma barycentric coordinates act as “weights” that is, if a point is closer to one of the triangle vertices, more “weight” will be given to that vertex when it comes to the summation. Perhaps, maybe I’ll go so far as to say that each vertex can “influence” the outcome of a particular interpolated value.
+
+	   		</p>
+	   		<p>
+	   			To illustrate this point, here's a triangle with one red, one green and one blue vertex, which produces a smoothly blended color triangle, because at each point the “influence” or weight of each vertex’s color changes accordingly.
+	   		</p>
+	   		<img src="./images/4task/barycentric.png"/>
+	   		<p>Here is also a png screenshot of svg/basic/test7.svg with default viewing parameters and sample rate 1.</p>
+	   		<img src="./images/4task/test7.png"/>
+	   	</div>
+	   </div>
+	   <div>
+	   	<h1>Task 5: “Pixel sampling” for texture mapping</h1>
+	   	<div>
+	   		<p>
+	   			Pixel sampling, in the context for texture mapping, is taking a sample at a screen-space coordinate (x,y) and using barycentric interpolation derived from screen-space coordinates to interpolate on given (u,v) texture coordinates.  Using the barycentric weighted (u,v) texture coordinates produced we can index into a texture map to retrieve the associated texture value and apply it to the (x,y) sample point. That is, Pixel sampling is taking a screen space sample location (x,y) and a (u,v) texture coordinate where we want to sample from the texture image itself and using barycentric interpolation based on screen space to generate (u,v) texture coordinates where we will retrieve the actual texture value to apply at the sample point (x,y).
+	   		</p>
+   	   </div>
+   	   <div>
+   	   	<h6>Implementation</h6>
+   	   	<div>
+   	   		<p>
+			To perform pixel sampling, I reused my implementation from “rasterize_interpolated_color_triangle” where I took the vertices of a triangle and calculated the barycentric coordinates of a screen space coordinate (x,y) and used the alpha beta and gamma barycentric coordinates to interpolate the appropriate color at that specific sample point. Instead of color, we are given the three associated texture coordinate vertices (U0, U1 and U2). Using the barycentric coordinates I interpolate on the texture coordinate vertices to obtain the (u,v) texture coordinates that I want to sample from the texture space. Along with (u,v) I also calculate the barycentric coordinates of (x + 1, y) and (x, y + 1) which allowed me to generate dx_du and dy_du which I passed on to the text.sample function. Because we are assuming in this problem that the level is zero. The following is what I did for sample_nearest.
+   	   		</p>
+   	   		<h6>sample_nearest</h6>
+   	   		<p>
+   	   		I scaled the (u, v) texture coordinates by the level 0 mipmap texture dimensions.  With these new texture coordinates, I then index into the texture map and retrieve the texture sample color, return it to our rasterizing texture function and apply that texture color to the sample point in the “sample_buffer”.
+   	   		</p>
+   	   		<h6>sample_bilinear</h6>
+   	   		<p>
+   	   			For sample bilinear I took the same approach as sample_nearest, except, one key distinction is that instead of just retrieving one sample with the scaled (u, v) texture coordinates from texture space, I retrieved 3 additional texture samples that neighboured the original texel by -1 in the u direction and -1 in the v direction.  With these four texture color samples, I then constructed a helper function to help me interpolate on the texture color samples. That is, I did bilinear interpolation on each color from the 4 texture colors that we received. More specifically I interpolated on the “top left and top right” texel colors with u and I also interpolated on the “bottom left and bottom right” texel colors on u, these two interpolated values allowed me to do a final interpolation along the y axis direction by interpolating these two values on v.  By composing the interpolation functions together I was able to obtain a bilinear interpolation set of  r, g b values, which I then used to color the sample pixel of interest.
+  	   		</p>
+   	   	</div>
+   	   </div>
+   	   <div>
+   	   	<h6> Exampleof when bilinear sampling clearly defeats nearest sampling</h6>
+   	   	<div>
+    	  <img src="./images/5task/nearest_1px.png"/>
+   	   	  <img src="./images/5task/bilinear_1px.png"/>  	   		
+	   	  <img src="./images/5task/nearest_16px.png"/>  	   	
+	   	  <img src="./images/5task/bilinear_16px.png"/>  	   
+   	   	</div>
+
+   	   	<div>
+   	   		<p>
+As we can see, even before we begin supersampling, beginning at 1 sample per pixel, bilinear sampling [figure 5b] already proves to be more effective at reducing artifacts such as jaggies, when we look at both renditions of the coastline and the coast itself. We can also note the discontinuities (unconnected longitudinal lines), compared to its sibling sampling method, nearest sampling [figure 5a], produces discontinuities, such as the disconnected longitudinal lines that are rasterized. But even when we super sample (at 16 samples per pixel), nearest sampling produces a longitudinal line that resembles a slightly improved bilinear sampling at 1 sample per pixel.  That is, for nearest sampling we no longer see discontinuities, but what we see are discontinuous samples layering on top of each other, providing a visual cue that these samples do not have relationships to one another. As opposed to what bilinear sampling has produced [figure 5d] at 16 samples per pixel, we see that discontinuous yet layered lines (jaggies) from nearest sampling, have become smoother, giving the impression that there is one underlying longitudinal line running down the globe. And when we look at the coast line, we see a much smoother transition in the colors rendered as one moves from the ocean towards the inland. And this is because each texture coordinate in bilinear sampling is taking into account information from its surrounding neighbors to generate a sample that integrates its surroundings as opposed to nearest sampling which continues to sample points in isolation, that is, a sample not aware of its surroundings can only rasterize itself, but through bilinear sampling, a sample can rasterize a texture that already builds up to a bigger picture.
+
+   	   		</p>
+   	   		<p>One thing to note is when would there be a large difference between the two methods? I would say it depends on the texture that you are sampling. Or a question to be answered is - do your samples need information on its surrounding neighbors to provide an accurate representation of itself? Based on this analysis I would say that textures that are mostly uniform, like the ocean portion of the image samples shown above, textures where there aren’t sharp changes is where we wouldn’t notice big changes, since one could say, the averaging of the pixels is already baked into these uniform textures.  But where would we see big noticeable changes? When there are sharp changes in the texture, such as that one white pixel present in nearest sampling 1px [figure 5a] that is still preserved as opposed to bilinear sampling already smooths it out [figure 5b], averages these contrasting parts of the map.
+</p>
+<p>In short, if you’re looking to rasterize a map that preserves contrasting features in the landscape, I would recommend nearest sampling but if one simply wanted the lay of the land, bilinear sampling would be the way I would recommend at this stage of the project.
+</p>
+   	   	</div>
+   	   </div>
+	   </div>
+	</div>
+	<div>
+		<h1>Task 6: “Pixel sampling” for texture mapping</h1>	
+		<div>
+		  <h6>Level Sampling</h6>	
+		  <div>
+		  	<p>
+		  		Level sampling is finding the “best” pre-computed filtered version of a texture for a sample point in screen space to sample from in texture space based upon a sample’s texture footprint. That is, by using a Mipmap, which stores different pre-computed filtered textures, by measuring its texture “footprint”, that is to say, because we know that when we “walk” from one sample point to the next, we know how far that is in the texture (in texture space). And by measuring that change in texture space, we can determine which pre-computed filtered version of the texture would match that “footprint” best.  To put more concretely, if our sample point moves 1:1 in texture space, that means there’s a one to one correspondence with the sample space and texture space, which means we can sample directly from the base level texture, i.e the texture in its full resolution. What happens when a screen sample point’s footprint is not 1:1? By describing how I implemented level sampling I hope to illustrate the answer.
+
+		  	</p>
+		  </div>
+		</div>
+		<div>
+			<h6>Implementation</h6>
+			<div>
+				<p>
+					For implementing level sampling, at a high level, in the context of this project, this final step is about integrating level sampling into nearest and bilinear sampling which at this stage of the project are simply sampling from a texture space of the base mipmap representation of the texture, which is the full resolution.
+				</p>
+				<p>
+					To implement level sampling I first implemented “get_level” where I focused on measuring the sample point’s “footprint”. In order to compute this “footprint” which is essentially calculating and choosing the max between the change in the x direction and the change in the y direction in texture space for screen space coordinates. That is, I calculated the derivatives in the x and y direction - “dy_uv”, “dx_uv” by first doing a point in triangle test for the following 3 points (x,y), (x+1, y) and (x, y + 1) in “RasterizerImp::rasterize_textured_triangle” in addition to calculating the barycentric coordinates for each of the screen space coordinates and then setting the barycentric interpolated values to “p_uv” and “p_dx_uv” and “p_dy_uv” in the SampleParams struct which would be used in “get_level”.
+				</p>
+				<p>
+					Once in “get_level” I calculated the difference vectors sp.p_dx_uv - sp.p_uv and sp.p_dy_uv - sp.p_uv and scaled the difference accordingly with the width and the height. And applied the formula to obtain the correct mipmap level, which essentially is taking the max of the two changing directions, the x direction or the y direction.  
+				</p>
+			</div>
+		</div>
+		<div>
+			<h6>Modifying sample_nearest and sample_bilinear</h6>
+			<div>
+				<p>
+					I then modified both sampling methods to take into account which level of the mipmap we are sampling from.
+				</p>
+			</div>
+		</div>
+		<div>
+			<h6>Completing Texture::sample</h6>
+			<div>
+				<p>With “get_level” complete to obtain the correct mip map level and the correct refactors to nearest and bilinear sampling, I now had the correct building blocks to complete Texture::sample.</p>
+<p>For L_NEAREST, I calculated the nearest appropriate mipmap level, where I simply rounded up to the next mipmap level if the difference between the current level we received from “get_level” and the floor value of that level was greater than .5, otherwise I would round down. With the appropriate nearest mipmap level acquired, we pass this to whichever pixel sample method is chosen.
+ </p>
+ <p>For L_LINEAR I computed the mipmap level as a continuous number and then computed a weighted sum using one sample from each of the adjacent mipmap levels. The way I did this was I invoked the “get_level” method and took the floor of that level to get the mip map floor below and then took that floor’d mip map level and incremented it by 1 to get to the next mip map level above.  Then for each of the cases, P_NEAREST and P_LINEAR I simply sampled both mipmap levels and and applied a weight of the difference of the level obtained by “get_level” and the rounded level (the floor’d version and the ceil’d version.
+</p>
+<p>The following are examples of different sampling techniques, using a face drawing and also describing the tradeoffs as we go through the different techniques, including level sampling.
+</p>
+			</div>
+			<div>
+				<h6>Selecting pixel sampling, level sampling, or the number of samples per pixel.</h6>
+			</div>
+			<div>
+
+				<h3>Level 0, Nearest Pixel Sampling, 1 sample per Pixel</h3>
+				<img src="./images/6task/0_lvl_0_nearest_pixel_sampling_1px_ss.png"/>
+
+				<h3>Nearest Level, Nearest Pixel Sampling, 1 sample per Pixel</h3>
+				<img src="./images/6task/1_lvl_nearest_lvl_nearest_pixel_sampling_1px_ss.png"/>
+
+				<h3>Bilinear Level, Nearest Pixel Sampling, 1 sample per Pixel</h3>
+				<img src="./images/6task/2_lvl_bilinear_lvl_nearest_pixel_sampling_1px_ss.png"/>
+
+				<h3>Bilinear Level, Bilinear Pixel Sampling, 1 sample per Pixel</h3>
+				<img src="./images/6task/4_lvl_bilinear_lvl_bilinear_pixel_sampling_1px_ss.png"/>
+
+				<h6>Level sampling</h6>
+				<p>
+				Speed - If you want speed, level sampling is pretty fast, since all the different filtered versions of the texture maps of the mipmap are pre-computed. And the lookup time to obtain the correct mipmap level requires some constant operations.
+				</p>
+				<p>
+				Memory - In regards to memory usage - it is very efficient since the storage overhead of the entire mipmap, which includes the original texture is (4/3)x, where x is the original texture size. And again, this is all pre-computed, so you can treat these mipmap textures like “cache”.
+				</p>
+				<p>
+				Anti Aliasing power - Not that bad, but there are limitations when incorporating different types of sampling, such as trilinear sampling where overblurring can occur where we begin to lose sharpness and clarity due to the distance between neighboring texture sample points becomes so small that there is no distinction between them.
+				</p>
+			</div>
+			<div>
+				<h6>Samples per Pixel (super sampling)</h6>
+
+				<h3>Level 0, Nearest Pixel Sampling, 16 sample per Pixel</h3>
+				<img src="./images/6task/5_0_lvl_0_nearest_pixel_sampling_16px_ss.png"/>
+
+				<h3>Nearest Level, Nearest Pixel Sampling, 16 sample per Pixel</h3>
+				<img src="./images/6task/6_0_lvl_nearest_nearest_pixel_sampling_16px_ss.png"/>
+
+				<h3>Bilinear Level, Nearest Pixel Sampling, 16 sample per Pixel</h3>
+				<img src="./images/6task/7_0_lvl_bilinear_nearest_pixel_sampling_16px_ss.png"/>
+
+				<h3>Bilinear Level, Bilinear Pixel Sampling, 16 sample per Pixel</h3>
+				<img src="./images/6task/8_0_lvl_bilinear_bilinear_pixel_sampling_16px_ss.png"/>
+				<div>
+					<p>
+					Speed - It’s an expensive operation, that is, its operations increase in proportion to how many subsamples we choose to sample. And as we increase those subsamples we still need to check that those subsamples are within the bounds of the triangle. As you can tell, for each subsample, we must still apply the same tests and calculations as before, so it becomes in general an expensive operation that translates to it being slow as it scales.
+					</p>
+					<p>
+					Memory usage - Again, it’s an expensive sampling method, for as we increase the sample size, our data structure that we use (the super sample sample buffer) needs to increase in proportion to the sample rate that we choose to have.
+					</p>
+					<p>
+						Anti Aliasing power - Pretty powerful, it removes aliasing artifacts effectively, such as “jaggies” and produces a more “smoothing” effect.
+
+					</p>
+				</div>
+			</div>
+			<div>
+				<h6>Selecting Pixel Sampling (nearest, bilinear and trilinear)</h6>
+				<div>
+					<p>
+						Speed - For nearest sampling, we are not doing any interpolation so it is the cheapest amongst the 3 sampling techniques I implemented. But as we move to bilinear sampling it requires - 4 texel reads and 3 lerps (3 mul + 6 add) as mentioned from lecture.  For Trilinear we require 8 texel reads and 7 lerps (7mul + 14 add).
+					</p>
+					<p>
+						Memory Usage -  For nearest sampling, the memory footprint is proportional to the size of the output size of the rasterized image. But there isn’t much of an increase when you move on to bilinear sampling and trilinear sampling, since all that we’re increasing are the number of samples. That is we’re only increasing memory in the stack by not that much to hold the calculations of the interpolations.
+					</p>
+					<p>
+						Anti Aliasing Power - Definitely has a strong anti aliasing power.  Especially with bilinear sampling which smooths out images really well. Trilinear however, in some cases begins to over blur images, so it would depend on what texture you’re sampling. 
+					</p>
+				</div>
+			</div>
+			<div>
+				<h6>Challenges</h6>
+				<div>
+					<ul>
+						<li>
+							One notable challenge that was overcome was that of level sampling, which did not work until the 11th hour commit. From scaling the derivatives in the computation stage with the width and height of the image (or even the texture’s width or height) which caused distortions. Many attempts were made to rectify the issue, from clamping the mipmap level, to modifying the weighting scheme. But as soon as all these issues were addressed simultaneously, it finally worked.
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+	</div>
+</body>
 </html>
