@@ -1,7 +1,211 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 3-2 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<style>
+		div.padded {
+			padding-top: 0px;
+			padding-right: 100px;
+			padding-bottom: 0.25in;
+			padding-left: 100px;
+		}
+	</style>
+	<title>Your Name | CS 184</title>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+</head>
+
+<body>
+	<br />
+	<h1 align="middle">Assignment 3-2: Additional Features to PathTracer</h1>
+	<h2 align="middle">Christopher Franco</h2>
+
+	<div class="padded">
+
+
+		* NOTE: For this project, you will choose TWO out of the four given parts to complete. One of those parts must be
+		Part 1 or Part 2. In other words, you can choose any combination of two parts except the pair (Part 3, Part 4).
+
+
+		<h3 align="middle">Part 2. Microfacet Material</h3>
+		<p><b>
+				Show a screenshot sequence of 4 images of scene `CBdragon_microfacet_au.dae` rendered with $\alpha$ set to
+				0.005, 0.05, 0.25 and 0.5. The other settings should be at least 128 samples per pixel and 1 samples per light.
+				The number of bounces should be at least 5. Describe the differences between different images. Note that, to
+				change the $\alpha$, just open the .dae file and search for `microfacet`.
+			</b></p>
+		<!-- Example of including multiple figures -->
+		<div align="middle">
+			<table style="width:100%">
+				<tr align="center">
+					<td>
+						<img src="images/pt2/alpha_0_dot_0_0_5_CBdragon_microfacet.png" align="middle" width="200px" />
+						<figcaption>alpha 0.005</figcaption>
+					</td>
+					<td>
+						<img src="images/pt2/alpha_0_dot_0_5_CBdragon_microfacet.png" align="middle" width="200px" />
+						<figcaption>alpha 0.05 </figcaption>
+					</td>
+				</tr>
+				<tr align="center">
+					<td>
+						<img src="images/pt2/alpha_0_dot_2_5_CBdragon_microfacet.png" align="middle" width="200px" />
+						<figcaption>alpha 0.25</figcaption>
+					</td>
+					<td>
+						<img src="images/pt2/alpha_0_dot_5_CBdragon_microfacet.png" align="middle" width="200px" />
+						<figcaption>alpha 0.5</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<h4>when α is set to 0.5</h4>
+		<p>
+			When we’ve increased alpha even further, the dragon no longer is really shiny or reflective it simply shows its
+			color, in a soft, non-shiny, non-reflective way. That is, it starts to show itself as an isotropic rough
+			conductor, in this case, giving it the visual representation of gold.
+		</p>
+		<h4>when α is set to 0.25</h4>
+		<p>
+			As we increase the alpha even more we see that it becomes less reflective and more bright
+		</p>
+		<h4>when α is set to 0.05</h4>
+		<p>
+			As we start to increse alpha we see that the shininess is starting to appear.
+		</p>
+		<h4>when α is set to 0.005 </h4>
+		<p>
+			when alpha is set to 0.005 we see the a “black” dragon, this is most likey due to the scenario where I am checking
+			if wi and wo are valid, by taking the dot product of the normal to wi and wo they should be greater. But because
+			alpha is set to such a low number, it could be the case that it becomes zero, thus returning the zero vector.
+			Which is why we get an overall “black” dragon.
+		</p>
+		<br>
+		<p><b>
+				Show two images of scene `CBbunny_microfacet_cu.dae` rendered using cosine hemisphere sampling (default) and
+				your importance sampling. The sampling rate should be fixed at 64 samples per pixel and 1 samples per light. The
+				number of bounces should be at least 5. Briefly discuss their difference.
+			</b></p>
+		<div align="middle">
+			<table style="width:100%">
+				<tr align="center">
+					<td>
+						<img src="images/pt2/compare_contrast_w_cosine_hemisphere_sampling_cbbunny_microfacet.png" align="middle"
+							width="200px" />
+						<figcaption>Cosine Hemisphere Sampling</figcaption>
+					</td>
+					<td>
+						<img src="images/pt2/compare_contrast_w_sampling_cbbunny_microfacet.png" align="middle" width="200px" />
+						<figcaption>Importance Sampling </figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<p>
+			One significant difference is how they both handle the more difficult parts of the rendering. In the cosine
+			hemisphere sampling we see complete noise, while the importance sampling is able to achieve correctly render the
+			reflectance, in a smooth manner from the walls and the floor.
+		</p>
+		<br>
+		<p><b>
+				Show at least one image with some other conductor material, replacing `eta` and `k`. Note that you should look
+				up values for real data rather than modifying them arbitrarily. Tell us what kind of material your parameters
+				correspond to.
+			</b></p>
+		<div align="middle">
+			<table style="width:100%">
+				<tr align="center">
+					<td>
+						<img src="images/pt2/mercury_CBdragon_microfacet.png" align="middle" width="200px" />
+						<figcaption>Mercury Dragon</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<p>
+			I looked up values for mercury and generated the following mercurial dragon. Pretty amazing!
+			<!-- liquid mercury at room temperature -->
+			eta values were: 1.8795 1.5472 1.1353
+			and K values were 5.1076 4.6437 3.9980
+		</p>
+		<br>
+
+		<h3 align="middle">Part 4. Depth of Field</h3>
+		<b>
+			For these subparts, we recommend using a microfacet BSDF scene to show off the cool out of focus effects you can
+			get with depth of field!
+		</b>
+		<p><b>
+				In a few sentences, explain the differences between a pinhole camera model and a thin-lens camera model.
+			</b></p>
+		<p>
+			At a high level a pin-hole camera is where light enters through a small aperture and is projected into a flat
+			image plane without passing through any other lenses, which is precicely what we have been doing so far up to this
+			point. That is, everything up to this point has been in focus. Whereas a thin-lens camera model, uses a lens to
+			refract light and focus on an image plane.
+		</p>
+		<br>
+		<p><b>
+				Show a "focus stack" where you focus at 4 visibly different depths through a scene. Make sure to include all
+				screenshots.
+			</b></p>
+		<div align="middle">
+			<table style="width:100%">
+				<tr align="center">
+					<td>
+						<img src="images/pt4/b_0_dot_23_d_3_dot_5.png" align="middle" width="200px" />
+						<figcaption></figcaption>
+					</td>
+					<td>
+						<img src="images/pt4/b_0_dot_23_d_5_dot_5.png" align="middle" width="200px" />
+						<figcaption> </figcaption>
+					</td>
+				</tr>
+				<tr align="center">
+					<td>
+						<img src="images/pt4/b_0_dot_23_d_4_dot_5.png" align="middle" width="200px" />
+						<figcaption></figcaption>
+					</td>
+					<td>
+						<img src="images/pt4/b_0_dot_023_d_3_dot_5.png" align="middle" width="200px" />
+						<figcaption></figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<br>
+		<p><b>
+				Show a sequence of 4 pictures with visibly different aperture sizes, all focused at the same point in a scene.
+				Make sure to include all screenshots.
+			</b></p>
+		<div align="middle">
+			<table style="width:100%">
+				<tr align="center">
+					<td>
+						<img src="images/pt4/aperture_b_0_dot_099_d_5_dot_5.png" align="middle" width="200px" />
+						<figcaption></figcaption>
+					</td>
+					<td>
+						<img src="images/pt4/aperture_b_0_dot_083_d_5_dot_5.png" align="middle" width="200px" />
+						<figcaption></figcaption>
+					</td>
+				</tr>
+				<tr align="center">
+					<td>
+						<img src="images/pt4/aperture_b_0_dot_073_d_5_dot_5.png" align="middle" width="200px" />
+						<figcaption></figcaption>
+					</td>
+					<td>
+						<img src="images/pt4/aperture_b_0_dot_023_d_5_dot_5.png" align="middle" width="200px" />
+						<figcaption></figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<p>
+		</p>
+		<br>
+	</div>
+</body>
+
 </html>
